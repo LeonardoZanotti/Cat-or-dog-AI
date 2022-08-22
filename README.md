@@ -1,4 +1,4 @@
-# Cat or dog IA
+# Cat or dog AI
 AI that counts the Biceps Curls you do
 
 ## Requirements
