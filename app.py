@@ -7,6 +7,7 @@ class App:
     def __init__(self):
         self.photo = None
         self.model = model.Model()
+        self.model.train_model()
 
     def update(self):
         if self.counting_enabled:
