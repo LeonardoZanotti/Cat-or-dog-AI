@@ -90,10 +90,6 @@ class Model:
             self.cats_progress.close()
             self.dogs_progress.close()
 
-            cats_train_counter = len([file for file in os.listdir(self.cats_train_dir) if
-                                      os.path.isfile(os.path.join(self.cats_train_dir, file))])
-            dogs_train_counter = len([file for file in os.listdir(self.dogs_train_dir) if
-                                      os.path.isfile(os.path.join(self.dogs_train_dir, file))])
             img_list = img_list.reshape(cats_train_counter + dogs_train_counter,
                                         RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
 
@@ -102,12 +98,10 @@ class Model:
                                                                                     random_state=self.seed)
             self.model.fit(self.X_train, self.Y_train)
 
-            filename = 'model.sav'
-            pickle.dump(self.model, open(filename, 'wb'))
+            pickle.dump(self.model, open(self.model_path, 'wb'))
 
             logger.info(f"Model successfully trained and saved as {self.model_path}!")
-
-        logger.info(f"The accuracy of the model is {self.verify_accuracy()}")
+            logger.info(f"The accuracy of the model is {self.verify_accuracy()}")
 
     def predict(self, image: str) -> float:
         img = cv.imread(image)[:, :, 0]
@@ -119,17 +113,4 @@ class Model:
         return prediction[0]
 
     def verify_accuracy(self) -> float:
-
-        # x_test = np.concatenate((self.cats_test_images, self.dogs_test_images), axis=None)
-        # x_test = x_test.reshape(-1, 1)
-        # 
-        # cats_test_counter = len([file for file in os.listdir(self.cats_test_dir) if
-        #                          os.path.isfile(os.path.join(self.cats_test_dir, file))])
-        # dogs_test_counter = len([file for file in os.listdir(self.dogs_test_dir) if
-        #                          os.path.isfile(os.path.join(self.dogs_test_dir, file))])
-        # 
-        # cats_test_output = np.repeat(1, cats_test_counter)
-        # dogs_test_output = np.repeat(2, dogs_test_counter)
-        # y_test = np.concatenate((cats_test_output, dogs_test_output), axis=None)
-
         return self.model.score(self.X_test, self.Y_test)
