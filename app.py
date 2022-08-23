@@ -28,6 +28,5 @@ class App:
             logger.error(e)
 
     def predict(self, img: str) -> str:
-        prediction = "cat" if self.model.predict(img) == 1 else "dog"
-        return prediction
+        return "cat" if self.model.predict(img) == 1 else "dog"
 

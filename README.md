@@ -1,5 +1,5 @@
 # Cat or dog AI
-AI that counts the Biceps Curls you do
+AI that check if the animal in the image is or cat or a dog
 
 ## Requirements
 ```commandline

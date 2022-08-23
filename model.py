@@ -28,19 +28,15 @@ class Model:
         self.test_size = 0.33
         self.seed = 13
 
-        self.cats_train_dir = "training_set/cats"
-        self.cats_test_dir = "test_set/cats"
-        self.cats_train_images = os.listdir(self.cats_train_dir)
-        self.cats_test_images = os.listdir(self.cats_test_dir)
+        self.cats_dir = "cats"
+        self.cats_images = os.listdir(self.cats_dir)
         self.cats_progress = None
 
-        self.dogs_train_dir = "training_set/dogs"
-        self.dogs_test_dir = "test_set/dogs"
-        self.dogs_train_images = os.listdir(self.dogs_train_dir)
-        self.dogs_test_images = os.listdir(self.dogs_test_dir)
+        self.dogs_dir = "dogs"
+        self.dogs_images = os.listdir(self.dogs_dir)
         self.dogs_progress = None
 
-    def train_model(self):
+    def train_model(self) -> None:
         if os.path.isfile(self.model_path):
             self.model = pickle.load(open(self.model_path, 'rb'))
             logger.info(f"Model loaded from file {self.model_path}")
@@ -51,36 +47,36 @@ class Model:
             logger.info("Starting the training with cat images...")
 
             # train cats
-            cats_train_counter = len([file for file in os.listdir(self.cats_train_dir) if
-                                 os.path.isfile(os.path.join(self.cats_train_dir, file))])
+            cats_train_counter = len([file for file in os.listdir(self.cats_dir) if
+                                 os.path.isfile(os.path.join(self.cats_dir, file))])
             self.cats_progress = tqdm(total=cats_train_counter, position=0, leave=False)
-            for filename in self.cats_train_images:
-                f = os.path.join(self.cats_train_dir, filename)
+            for filename in self.cats_images:
+                f = os.path.join(self.cats_dir, filename)
                 if os.path.isfile(f):
                     img = cv.imread(f)[:, :, 0]
                     img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
                     img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
                     cats_img_list = np.append(cats_img_list, [img_reshaped])
                     self.cats_progress.set_description(
-                        "Training with cat images...".format(self.cats_train_images.index(filename)))
+                        "Training with cat images...".format(self.cats_images.index(filename)))
                     self.cats_progress.update(1)
 
             logger.info("Done the training with cat images...")
             logger.info("Starting the training with dog images...")
 
             # train dogs
-            dogs_train_counter = len([file for file in os.listdir(self.dogs_train_dir) if
-                                 os.path.isfile(os.path.join(self.dogs_train_dir, file))])
+            dogs_train_counter = len([file for file in os.listdir(self.dogs_dir) if
+                                 os.path.isfile(os.path.join(self.dogs_dir, file))])
             self.dogs_progress = tqdm(total=dogs_train_counter, position=0, leave=False)
-            for filename in self.dogs_train_images:
-                f = os.path.join(self.dogs_train_dir, filename)
+            for filename in self.dogs_images:
+                f = os.path.join(self.dogs_dir, filename)
                 if os.path.isfile(f):
                     img = cv.imread(f)[:, :, 0]
                     img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
                     img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
                     dogs_img_list = np.append(dogs_img_list, [img_reshaped])
                     self.dogs_progress.set_description(
-                        "Training with dog images...".format(self.dogs_train_images.index(filename)))
+                        "Training with dog images...".format(self.dogs_dir.index(filename)))
                     self.dogs_progress.update(1)
 
             logger.info("Done the training with dog images...")
