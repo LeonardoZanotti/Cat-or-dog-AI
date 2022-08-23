@@ -84,6 +84,4 @@ class Model:
 
         prediction = self.model.predict([img_reshaped])
 
-        # logger.info(prediction[0])
-
         return prediction[0]
