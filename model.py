@@ -1,23 +1,30 @@
-import cv2 as cv
-import numpy as np
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import train_test_split
-import os
-from tqdm import tqdm
 import logging
+import os
 import pickle
 
-logger = logging.getLogger('ftpuploader')
-logging.basicConfig(level=logging.INFO, format='\n%(asctime)s :: %(levelname)s :: %(message)s')
+import cv2 as cv
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
-RESIZED_IMAGE_WIDTH = 150
-RESIZED_IMAGE_HEIGHT = 150
+logger = logging.getLogger('ftpuploader')
+logging.basicConfig(level=logging.INFO,
+                    format='\n%(asctime)s :: %(levelname)s :: %(message)s')
+
+RESIZED_IMAGE_WIDTH = 500
+RESIZED_IMAGE_HEIGHT = 500
+RESIZED_TUPLE = (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT)
+RESIZED_PRODUCT = RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT
+NUM_TREES = 200
+SEED = 13
+TEST_SIZE = 0.15
 
 
 class Model:
 
     def __init__(self):
-        self.model = LinearSVC(dual=False)
+        self.model = RandomForestClassifier(n_estimators=NUM_TREES, random_state=SEED)
 
         self.model_path = "model.sav"
 
@@ -25,8 +32,6 @@ class Model:
         self.X_test = None
         self.Y_train = None
         self.Y_test = None
-        self.test_size = 0.33
-        self.seed = 13
 
         self.cats_dir = "cats"
         self.cats_images = os.listdir(self.cats_dir)
@@ -47,15 +52,16 @@ class Model:
             logger.info("Starting the training with cat images...")
 
             # train cats
-            cats_train_counter = len([file for file in os.listdir(self.cats_dir) if
-                                      os.path.isfile(os.path.join(self.cats_dir, file))])
-            self.cats_progress = tqdm(total=cats_train_counter, position=0, leave=False)
+            cats_counter = len([file for file in os.listdir(self.cats_dir) if
+                                os.path.isfile(os.path.join(self.cats_dir, file))])
+            self.cats_progress = tqdm(
+                total=cats_counter, position=0, leave=False)
             for filename in self.cats_images:
                 f = os.path.join(self.cats_dir, filename)
                 if os.path.isfile(f):
                     img = cv.imread(f)[:, :, 0]
-                    img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
-                    img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+                    img_resized = cv.resize(img, RESIZED_TUPLE)
+                    img_reshaped = img_resized.reshape((1, RESIZED_PRODUCT))
                     cats_img_list = np.append(cats_img_list, [img_reshaped])
                     self.cats_progress.set_description(
                         "Training with cat images...".format(self.cats_images.index(filename)))
@@ -66,15 +72,16 @@ class Model:
             logger.info("Starting the training with dog images...")
 
             # train dogs
-            dogs_train_counter = len([file for file in os.listdir(self.dogs_dir) if
-                                      os.path.isfile(os.path.join(self.dogs_dir, file))])
-            self.dogs_progress = tqdm(total=dogs_train_counter, position=0, leave=False)
+            dogs_counter = len([file for file in os.listdir(self.dogs_dir) if
+                                os.path.isfile(os.path.join(self.dogs_dir, file))])
+            self.dogs_progress = tqdm(
+                total=dogs_counter, position=0, leave=False)
             for filename in self.dogs_images:
                 f = os.path.join(self.dogs_dir, filename)
                 if os.path.isfile(f):
                     img = cv.imread(f)[:, :, 0]
-                    img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
-                    img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+                    img_resized = cv.resize(img, RESIZED_TUPLE)
+                    img_reshaped = img_resized.reshape((1, RESIZED_PRODUCT))
                     dogs_img_list = np.append(dogs_img_list, [img_reshaped])
                     self.dogs_progress.set_description(
                         "Training with dog images...".format(self.dogs_images.index(filename)))
@@ -84,36 +91,37 @@ class Model:
             logger.info("Done the training with dog images...")
             logger.info("Finishing the training...")
 
-            cats_class_list = np.repeat(1, cats_train_counter)
-            dogs_class_list = np.repeat(2, dogs_train_counter)
+            cats_class_list = np.repeat(1, cats_counter)
+            dogs_class_list = np.repeat(2, dogs_counter)
 
-            logger.info("Doing the IA magic stuff...")
+            logger.info("Learning more about cats and dogs...")
 
             X = np.concatenate((cats_img_list, dogs_img_list), axis=None)
             Y = np.concatenate((cats_class_list, dogs_class_list), axis=None)
 
-            X = X.reshape(cats_train_counter + dogs_train_counter,
-                          RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
-
-            logger.info("Learning more about cats and dogs...")
+            X = X.reshape(cats_counter + dogs_counter, RESIZED_PRODUCT)
 
             self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(X, Y,
-                                                                                    test_size=self.test_size,
-                                                                                    random_state=self.seed)
+                                                                                    test_size=TEST_SIZE,
+                                                                                    random_state=SEED)
 
-            logger.info("Fitting the model and saving it...")
+            logger.info("Doing the IA magic stuff...")
 
             self.model.fit(self.X_train, self.Y_train)
 
+            logger.info("Saving the model...")
+
             pickle.dump(self.model, open(self.model_path, 'wb'))
 
-            logger.info(f"Model successfully trained and saved as {self.model_path}!")
-            logger.info(f"The accuracy of the model is {self.verify_accuracy()}")
+            logger.info(
+                f"Model successfully trained and saved as {self.model_path}!")
+            logger.info(
+                f"The accuracy of the model is {self.verify_accuracy()}")
 
     def predict(self, image: str) -> float:
         img = cv.imread(image)[:, :, 0]
-        img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
-        img_reshaped = img_resized.reshape(RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
+        img_resized = cv.resize(img, RESIZED_TUPLE)
+        img_reshaped = img_resized.reshape(RESIZED_PRODUCT)
 
         prediction = self.model.predict([img_reshaped])
 
