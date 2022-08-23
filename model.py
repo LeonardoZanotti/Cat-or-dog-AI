@@ -5,6 +5,8 @@ from sklearn.svm import LinearSVC
 import os
 from tqdm import tqdm
 
+RESIZED_IMAGE_WIDTH = 200
+RESIZED_IMAGE_HEIGHT = 120
 
 class Model:
 
@@ -33,8 +35,9 @@ class Model:
             f = os.path.join(self.cats_train_dir, filename)
             if os.path.isfile(f):
                 img = cv.imread(f)[:, :, 0]
-                # img = img.reshape(16950)
-                img_list = np.append(img_list, [img])
+                img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
+                img_reshaped = img_resized.reshape((1,RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+                img_list = np.append(img_list, [img_reshaped])
                 class_list = np.append(class_list, 1)
                 self.cats_progress.set_description("Training with cat images...".format(cats_directory.index(filename)))
                 self.cats_progress.update(1)
@@ -45,8 +48,9 @@ class Model:
             # checking if it is a file
             if os.path.isfile(f):
                 img = cv.imread(f)[:, :, 0]
-                # img = img.reshape(16950)
-                img_list = np.append(img_list, [img])
+                img_resized = cv.resize(img, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
+                img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+                img_list = np.append(img_list, [img_reshaped])
                 class_list = np.append(class_list, 2)
                 self.dogs_progress.set_description("Training with dog images...".format(dogs_directory.index(filename)))
                 self.dogs_progress.update(1)
@@ -54,7 +58,7 @@ class Model:
         self.cats_progress.close()
         self.dogs_progress.close()
 
-        img_list = img_list.reshape(self.cats_counter + self.dogs_counter, 16950)
+        img_list = img_list.reshape(self.cats_counter + self.dogs_counter, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
         self.model.fit(img_list, class_list)
         print("Model successfully trained!")
 
