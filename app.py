@@ -1,5 +1,9 @@
-import PIL.Image, PIL.ImageTk
 import model
+import sys
+import logging
+
+logger = logging.getLogger('ftpuploader')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s :: %(levelname)s :: %(message)s')
 
 
 class App:
@@ -7,33 +11,20 @@ class App:
     def __init__(self):
         self.photo = None
         self.model = model.Model()
-        self.model.train_model()
+        self.execute()
 
-    def update(self):
-        if self.counting_enabled:
-            self.predict()
+    def execute(self):
+        try:
+            img_path: str = sys.argv[1]
+            self.model.train_model()
+            prediction: str = self.predict(img_path)
+            logger.info(f"It's a {prediction}")
+        except IndexError as e:
+            logger.error("Inform the image!")
+        except Exception as e:
+            logger.error(e)
 
-        if self.extended and self.contracted:
-            self.extended, self.contracted = False, False
-            self.rep_counter += 1
-
-        self.counter_label.config(text=f"{self.rep_counter}")
-
-        ret, frame = self.camera.get_frame()
-        if ret:
-            self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
-            self.canvas.create_image(0, 0, image=self.photo, anchor=tk.W)
-
-        self.window.after(self.delay, self.update)
-
-    def predict(self):
-        frame = self.camera.get_frame()
-        prediction = self.model.predict(frame)
-        if prediction != self.last_prediction:
-            if prediction == 1:
-                self.extended = True
-                self.last_prediction = 1
-            if prediction == 2:
-                self.contracted = True
-                self.last_prediction = 2
+    def predict(self, img: str) -> str:
+        prediction = "cat" if self.model.predict(img) == 1.0 else "dog"
+        return prediction
 
