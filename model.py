@@ -48,7 +48,7 @@ class Model:
 
             # train cats
             cats_train_counter = len([file for file in os.listdir(self.cats_dir) if
-                                 os.path.isfile(os.path.join(self.cats_dir, file))])
+                                      os.path.isfile(os.path.join(self.cats_dir, file))])
             self.cats_progress = tqdm(total=cats_train_counter, position=0, leave=False)
             for filename in self.cats_images:
                 f = os.path.join(self.cats_dir, filename)
@@ -60,13 +60,14 @@ class Model:
                     self.cats_progress.set_description(
                         "Training with cat images...".format(self.cats_images.index(filename)))
                     self.cats_progress.update(1)
+            self.cats_progress.close()
 
             logger.info("Done the training with cat images...")
             logger.info("Starting the training with dog images...")
 
             # train dogs
             dogs_train_counter = len([file for file in os.listdir(self.dogs_dir) if
-                                 os.path.isfile(os.path.join(self.dogs_dir, file))])
+                                      os.path.isfile(os.path.join(self.dogs_dir, file))])
             self.dogs_progress = tqdm(total=dogs_train_counter, position=0, leave=False)
             for filename in self.dogs_images:
                 f = os.path.join(self.dogs_dir, filename)
@@ -76,14 +77,11 @@ class Model:
                     img_reshaped = img_resized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
                     dogs_img_list = np.append(dogs_img_list, [img_reshaped])
                     self.dogs_progress.set_description(
-                        "Training with dog images...".format(self.dogs_dir.index(filename)))
+                        "Training with dog images...".format(self.dogs_images.index(filename)))
                     self.dogs_progress.update(1)
-
-            logger.info("Done the training with dog images...")
-
-            self.cats_progress.close()
             self.dogs_progress.close()
 
+            logger.info("Done the training with dog images...")
             logger.info("Finishing the training...")
 
             cats_class_list = np.repeat(1, cats_train_counter)
@@ -95,7 +93,7 @@ class Model:
             Y = np.concatenate((cats_class_list, dogs_class_list), axis=None)
 
             X = X.reshape(cats_train_counter + dogs_train_counter,
-                                        RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
+                          RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT)
 
             logger.info("Learning more about cats and dogs...")
 
