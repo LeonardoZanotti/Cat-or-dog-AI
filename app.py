@@ -1,5 +1,5 @@
 import model
-import sys
+import sys, os
 import logging
 
 logger = logging.getLogger('ftpuploader')
@@ -16,6 +16,9 @@ class App:
     def execute(self):
         try:
             img_path: str = sys.argv[1]
+            if not os.path.isfile(img_path):
+                logger.error("Incorrect file path!")
+                exit(123)
             self.model.train_model()
             prediction: str = self.predict(img_path)
             logger.info(f"It's a {prediction}")
