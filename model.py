@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 import threading
+from time import sleep
 
 import cv2 as cv
 import numpy as np
@@ -13,8 +14,8 @@ logger = logging.getLogger('ftpuploader')
 logging.basicConfig(level=logging.INFO,
                     format='\n%(asctime)s :: %(levelname)s :: %(message)s')
 
-RESIZED_IMAGE_WIDTH = 5
-RESIZED_IMAGE_HEIGHT = 5
+RESIZED_IMAGE_WIDTH = 500
+RESIZED_IMAGE_HEIGHT = 500
 RESIZED_TUPLE = (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT)
 RESIZED_PRODUCT = RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT
 NUM_TREES = 200
@@ -49,6 +50,7 @@ class Model:
         self.cats_progress = tqdm(
             total=cats_counter, position=0, leave=False)
         for filename in self.cats_images:
+            sleep(0.01)
             f = os.path.join(self.cats_dir, filename)
             if os.path.isfile(f):
                 img = cv.imread(f)[:, :, 0]
@@ -66,6 +68,7 @@ class Model:
         self.dogs_progress = tqdm(
             total=dogs_counter, position=0, leave=False)
         for filename in self.dogs_images:
+            sleep(0.01)
             f = os.path.join(self.dogs_dir, filename)
             if os.path.isfile(f):
                 img = cv.imread(f)[:, :, 0]
