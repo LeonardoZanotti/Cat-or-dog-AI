@@ -78,6 +78,14 @@ class Model:
         self.dogs_progress.close()
         logger.info("Done the training with dog images...")
 
+    def train_test_splitter(self, X, Y) -> None:
+        self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(X, Y,
+                                                                                test_size=TEST_SIZE,
+                                                                                random_state=SEED)
+
+    def fit_model(self) -> None:
+        self.model.fit(self.X_train, self.Y_train)
+
     def train_model(self) -> None:
         if os.path.isfile(self.model_path):
             self.model = pickle.load(open(self.model_path, 'rb'))
@@ -101,20 +109,20 @@ class Model:
 
             logger.info("Learning more about cats and dogs...")
 
-            logger.info(f"{len(self.cats_img_list)} {len(self.dogs_img_list)}")
-
             X = np.concatenate((self.cats_img_list, self.dogs_img_list), axis=None)
             Y = np.concatenate((cats_class_list, dogs_class_list), axis=None)
 
             X = X.reshape(cats_counter + dogs_counter, RESIZED_PRODUCT)
 
-            self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(X, Y,
-                                                                                    test_size=TEST_SIZE,
-                                                                                    random_state=SEED)
+            split_thread = threading.Thread(target=self.train_test_splitter, args=(X, Y,), daemon=True)
+            split_thread.start()
+            split_thread.join()
 
             logger.info("Doing the IA magic stuff...")
 
-            self.model.fit(self.X_train, self.Y_train)
+            fit_thread = threading.Thread(target=self.fit_model(), daemon=True)
+            fit_thread.start()
+            fit_thread.join()
 
             logger.info("Saving the model...")
 
